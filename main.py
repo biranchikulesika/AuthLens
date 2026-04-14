@@ -1,44 +1,54 @@
-from modules.dictionary_generator import run_dictionary_generator
-from modules.strength_analyzer import run_strength_analyzer
-from modules.brute_force_simulator import run_brute_force_simulator
-from modules.hash_parser import run_hash_parser
-from modules.report_generator import run_report_generator
+from rich.console import Console
+from rich.panel import Panel
+from rich.prompt import Prompt
 
+from modules.passforge import run_passforge
+from modules.strengthmeter import run_strengthmeter
+from modules.brutecheck import run_brutecheck
+from modules.hashscan import run_hashscan
+from modules.auditor import run_auditor
+
+console = Console()
 
 def print_menu():
-    print("\n" + "=" * 50)
-    print(" PASSWORD AUDIT SUITE ".center(50, "="))
-    print("=" * 50)
-    print("1. Generate Dictionary")
-    print("2. Analyze Password Strength")
-    print("3. Simulate Brute Force")
-    print("4. Parse Sample Hashes")
-    print("5. Generate Audit Report")
-    print("6. Exit")
-    print("=" * 50)
+    menu_text = (
+        "[cyan]1.[/cyan] Generate Dictionary\n"
+        "[cyan]2.[/cyan] Analyze Password Strength\n"
+        "[cyan]3.[/cyan] Simulate Brute Force\n"
+        "[cyan]4.[/cyan] Parse Sample Hashes\n"
+        "[cyan]5.[/cyan] Generate Audit Report\n"
+        "[cyan]6.[/cyan] Exit"
+    )
+    panel = Panel(
+        menu_text,
+        title="[bold cyan]🔐 AUTH LENS[/bold cyan]",
+        border_style="cyan",
+        width=50,
+        expand=False,
+    )
+    console.print()
+    console.print(panel, justify="center")
 
 
 def main():
     while True:
         print_menu()
-        choice = input("Enter your choice (1-6): ").strip()
+        console.print()
+        choice = Prompt.ask("[bold yellow]Enter your choice[/bold yellow]", choices=["1", "2", "3", "4", "5", "6"], default="6")
 
         if choice == "1":
-            run_dictionary_generator()
+            run_passforge()
         elif choice == "2":
-            run_strength_analyzer()
+            run_strengthmeter()
         elif choice == "3":
-            run_brute_force_simulator()
+            run_brutecheck()
         elif choice == "4":
-            run_hash_parser()
+            run_hashscan()
         elif choice == "5":
-            run_report_generator()
+            run_auditor()
         elif choice == "6":
-            print("Exiting Password Audit Suite. Goodbye!")
+            console.print("\n[bold green]Exiting Auth Lens. Goodbye![/bold green]\n", justify="center")
             break
-        else:
-            print("Invalid choice. Please enter a number between 1 and 6.")
-
 
 if __name__ == "__main__":
     main()

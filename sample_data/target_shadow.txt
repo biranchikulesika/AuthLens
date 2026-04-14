@@ -1,0 +1,6 @@
+root:$6$X1K$w9J48rKx/8sQzv1W.p./rGz/4vV.P./1Q/:19142:0:99999:7:::
+sys:$5$U1M$T9J93rKx/8sQzv1W.p./rGz/4vV.P./1Q/:19142:0:99999:7:::
+alice:$1$K1M$T9J93rKx/8sQzv1W.p./rGz/4vV.P./1Q/:19142:0:99999:7:::
+bob:$2y$12$Z0H48rKx/8sQzv1W.p./rGz/4vV.P./1Q/:19142:0:99999:7:::
+charlie:$y$j9T$Z0H48rKx/8sQzv1W.p./rGz/4vV.P/:19142:0:99999:7:::
+david:$argon2id$v=19$m=65536,t=3,p=4$Z0H48rKx/8sQzv1W$p./rGz/4vV.P/:19142:0:99999:7:::

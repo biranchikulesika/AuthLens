@@ -2,11 +2,11 @@ import os
 from datetime import datetime
 
 # Imports from our improved modules
-from modules.strength_analyzer import (
+from modules.strengthmeter import (
     load_dictionary_words,
     analyze_password_file,      # ← This is now available after adding the function above
 )
-from modules.hash_parser import analyze_hash_file
+from modules.hashscan import analyze_hash_file
 
 
 def summarize_password_results(results):
@@ -107,34 +107,42 @@ def build_final_report(password_results, hash_results):
     return "\n".join(report)
 
 
-def save_final_report(report_text: str, output_file="output/final_audit_report.txt"):
+def save_final_report(report_text: str, output_file=None) -> str:
+    if output_file is None:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_file = f"output/authlens_audit_{timestamp}.txt"
+        
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(report_text)
+        
+    return output_file
 
 
-def run_report_generator():
-    """User-friendly final report generation."""
-    print("\n📋 Auth Lens - Final Audit Report Generator")
-    print("=" * 65)
-    print("Generating final security audit report...\n")
+from rich.console import Console
+from rich.panel import Panel
 
-    dictionary_words = load_dictionary_words()
+console = Console()
 
-    password_results = analyze_password_file("sample_data/sample_passwords.txt", dictionary_words)
-    linux_hashes = analyze_hash_file("sample_data/sample_linux_shadow.txt", "shadow")
-    ntlm_hashes = analyze_hash_file("sample_data/sample_ntlm_hashes.txt", "ntlm")
-    hash_results = linux_hashes + ntlm_hashes
+def run_auditor():
+    """User-friendly final report generation using rich."""
+    console.print()
+    console.print(Panel("[bold cyan]📋 Auditor - Security Audit Report[/bold cyan]", border_style="cyan", expand=False, padding=(0, 2)))
+    
+    with console.status("[bold green]Generating final security audit report...[/bold green]", spinner="dots"):
+        dictionary_words = load_dictionary_words()
 
-    report_text = build_final_report(password_results, hash_results)
-    save_final_report(report_text)
+        password_results = analyze_password_file("sample_data/target_passwords.txt", dictionary_words)
+        linux_hashes = analyze_hash_file("sample_data/target_shadow.txt", "shadow")
+        ntlm_hashes = analyze_hash_file("sample_data/target_ntlm.txt", "ntlm")
+        hash_results = linux_hashes + ntlm_hashes
 
-    print("✅ Final audit report generated successfully!")
-    print(f"📄 Saved to : output/final_audit_report.txt\n")
+        report_text = build_final_report(password_results, hash_results)
+        saved_file = save_final_report(report_text)
+
+    console.print("\n[bold green]✅ Final audit report generated successfully![/bold green]")
+    console.print(f"📄 [dim]Saved to : {saved_file}[/dim]\n")
 
     # Show short preview
-    print("Preview:")
-    print("-" * 40)
-    for line in report_text.splitlines()[:12]:
-        print(line)
-    print("-" * 40)
+    preview_text = "\n".join(report_text.splitlines()[:20])
+    console.print(Panel(f"[italic]{preview_text}[/italic]...\n\n[bold italic](View full report in output directory)[/bold italic]", title="[bold yellow]Report Preview[/bold yellow]", border_style="yellow", expand=False))

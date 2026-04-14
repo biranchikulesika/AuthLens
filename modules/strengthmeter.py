@@ -57,7 +57,7 @@ SEQUENTIAL_STRINGS = [
 ]
 
 
-def load_dictionary_words(filepath="sample_data/common_words.txt") -> set:
+def load_dictionary_words(filepath="sample_data/wordlist_common.txt") -> set:
     """Load common weak words from file."""
     if not os.path.exists(filepath):
         return set()
@@ -317,40 +317,80 @@ def analyze_password(password: str, dictionary_words: set) -> Dict[str, Any]:
     }
 
 
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+from rich.prompt import Prompt
+
+console = Console()
+
 def print_analysis(result: Dict[str, Any]):
-    """Beautiful CLI output."""
-    print("\n" + "=" * 70)
-    print("🔐 PASSWORD STRENGTH ANALYSIS")
-    print("=" * 70)
-    print(f"Password           : {result['masked_password']}")
-    print(f"Length             : {result['length']} characters")
-    print(f"Entropy            : {result['entropy']} bits")
-    print(f"Estimated Crack Time : {result['estimated_crack_time']}")
-    print(f"Score              : {result['score']}/10")
-    print(f"Strength           : {result['strength']}")
+    """Beautiful CLI output using rich."""
+    table = Table(show_header=False, box=None, padding=(0, 2))
+    table.add_column("Property", style="bold cyan")
+    table.add_column("Value", style="none")
+    
+    table.add_row("Password", result['masked_password'])
+    table.add_row("Length", f"{result['length']} characters")
+    table.add_row("Entropy", f"{result['entropy']} bits")
+    table.add_row("Est. Crack Time", result['estimated_crack_time'])
+    table.add_row("Score", f"{result['score']}/10")
+    
+    strength_color = "red"
+    if result["score"] >= 8:
+        strength_color = "green"
+    elif result["score"] >= 6:
+        strength_color = "yellow"
+    table.add_row("Strength", f"[bold {strength_color}]{result['strength']}[/bold {strength_color}]")
 
-    print("\n📊 Composition:")
     comp = result
-    print(f"   Lowercase     : {'✅' if comp['has_lowercase'] else '❌'}")
-    print(f"   Uppercase     : {'✅' if comp['has_uppercase'] else '❌'}")
-    print(f"   Digits        : {'✅' if comp['has_digits'] else '❌'}")
-    print(f"   Symbols       : {'✅' if comp['has_symbols'] else '❌'}")
+    comp_text = (
+        f"   Lowercase     : {'✅' if comp['has_lowercase'] else '❌'}\n"
+        f"   Uppercase     : {'✅' if comp['has_uppercase'] else '❌'}\n"
+        f"   Digits        : {'✅' if comp['has_digits'] else '❌'}\n"
+        f"   Symbols       : {'✅' if comp['has_symbols'] else '❌'}"
+    )
 
-    print("\n⚠️  Weakness Findings:")
+    weakness_text = ""
     for key, value in result["findings"].items():
         if value:
-            print(f"   • {key.replace('_', ' ').title()}")
+            weakness_text += f"   • {key.replace('_', ' ').title()}\n"
+    if not weakness_text:
+        weakness_text = "   [dim]None[/dim]\n"
 
-    print("\n💡 Recommendations:")
+    rec_text = ""
     for i, rec in enumerate(result["recommendations"], 1):
-        print(f"   {i}. {rec}")
-    print("=" * 70)
+        rec_text += f"   {i}. {rec}\n"
+
+    from rich.console import Group
+    content = Group(
+        table,
+        "\n[bold magenta]📊 Composition:[/bold magenta]",
+        comp_text,
+        "\n[bold yellow]⚠️  Weakness Findings:[/bold yellow]",
+        weakness_text,
+        "[bold green]💡 Recommendations:[/bold green]",
+        rec_text.strip()
+    )
+
+    panel = Panel(
+        content,
+        title="[bold green]🔐 PASSWORD STRENGTH ANALYSIS[/bold green]",
+        border_style="green",
+        expand=False
+    )
+    console.print()
+    console.print(panel)
 
 
 def save_analysis_report(
-    results: List[Dict], output_file="output/password_analysis_report.txt"
-):
+    results: List[Dict], output_file=None
+) -> str:
     """Save detailed report."""
+    if output_file is None:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_file = f"output/strengthmeter_report_{timestamp}.txt"
+        
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
     with open(output_file, "w", encoding="utf-8") as f:
@@ -383,6 +423,8 @@ def save_analysis_report(
                 f.write(f"  {i}. {rec}\n")
             f.write("\n" + "-" * 80 + "\n\n")
 
+    return output_file
+
 
 def analyze_password_file(filepath: str, dictionary_words: set) -> list:
     """
@@ -401,53 +443,52 @@ def analyze_password_file(filepath: str, dictionary_words: set) -> list:
     return results
 
 
-def run_strength_analyzer():
+def run_strengthmeter():
     """Improved user-friendly CLI."""
     dictionary_words = load_dictionary_words()
 
-    print("\n🔐 Auth Lens - Password Strength Analyzer")
-    print("=" * 55)
-    print("1. Analyze a single password")
-    print("2. Analyze passwords from file (sample_data/sample_passwords.txt)")
-    print("3. Back to main menu")
+    console.print()
+    console.print(Panel("[bold cyan]🔐 StrengthMeter - Password Analyzer[/bold cyan]", border_style="cyan", expand=False, padding=(0, 2)))
+    
+    console.print("  [cyan]1.[/cyan] Analyze a single password")
+    console.print("  [cyan]2.[/cyan] Analyze passwords from file (sample_data/target_passwords.txt)")
+    console.print("  [cyan]3.[/cyan] Back to main menu")
 
-    choice = input("\nEnter your choice (1-3): ").strip()
+    choice = Prompt.ask("\nEnter your choice", choices=["1", "2", "3"], default="3")
 
     if choice == "1":
-        password = input("\nEnter password to analyze: ").strip()
+        password = Prompt.ask("\n[bold yellow]Enter password to analyze[/bold yellow]")
         if not password:
-            print("No password entered.")
+            console.print("[red]No password entered.[/red]")
             return
 
         result = analyze_password(password, dictionary_words)
         print_analysis(result)
 
     elif choice == "2":
-        filepath = "sample_data/sample_passwords.txt"
+        filepath = "sample_data/target_passwords.txt"
         if not os.path.exists(filepath):
-            print(f"❌ File not found: {filepath}")
-            print("Please create the file with one password per line.")
+            console.print(f"[red]❌ File not found:[/red] {filepath}")
+            console.print("Please create the file with one password per line.")
             return
 
-        print(f"\nAnalyzing passwords from {filepath}...")
+        console.print(f"\n[cyan]Analyzing passwords from {filepath}...[/cyan]")
         results = []
 
         with open(filepath, "r", encoding="utf-8") as f:
             passwords = [line.strip() for line in f if line.strip()]
 
-        for i, pw in enumerate(passwords, 1):
-            print(f"  Analyzing {i}/{len(passwords)}...", end="\r")
+        from rich.progress import track
+        for pw in track(passwords, description="Analyzing..."):
             results.append(analyze_password(pw, dictionary_words))
 
-        print(f"\n✅ Analyzed {len(results)} passwords successfully!")
+        console.print(f"\n[bold green]✅ Analyzed {len(results)} passwords successfully![/bold green]")
 
         for result in results:
             print_analysis(result)
 
-        save_analysis_report(results)
-        print(f"\n📄 Full report saved to: output/password_analysis_report.txt")
+        saved_file = save_analysis_report(results)
+        console.print(f"\n[bold green]📄 Full report saved to:[/bold green] {saved_file}")
 
     elif choice == "3":
         return
-    else:
-        print("Invalid choice.")

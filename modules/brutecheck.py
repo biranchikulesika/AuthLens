@@ -112,37 +112,67 @@ def analyze_brute_force(
     }
 
 
+from rich.console import Console, Group
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
+
+console = Console()
+
 def print_simulation_report(result: Dict, charset_label: str, speed_label: str):
-    """Clean and beautiful CLI report."""
-    print("\n" + "=" * 75)
-    print("🔥 BRUTE-FORCE SIMULATION REPORT")
-    print("=" * 75)
-    print(f"Password Length       : {result['length']} characters")
-    print(f"Character Set         : {charset_label}")
-    print(f"Character Pool Size   : {result['charset_size']:,}")
-    print(
-        f"Cracking Speed        : {speed_label} ({format_large_number(result['guesses_per_second'])} guesses/sec)"
+    """Clean and beautiful CLI report using rich."""
+    table = Table(show_header=False, box=None, padding=(0, 2))
+    table.add_column("Property", style="bold cyan")
+    table.add_column("Value", style="none")
+    
+    table.add_row("Password Length", f"{result['length']} characters")
+    table.add_row("Character Set", charset_label)
+    table.add_row("Character Pool Size", f"{result['charset_size']:,}")
+    table.add_row("Cracking Speed", f"{speed_label} ({format_large_number(result['guesses_per_second'])} guesses/sec)")
+    table.add_row("", "")
+    table.add_row("Total Search Space", format_large_number(result["search_space"]))
+    
+    time_table = Table(show_header=False, box=None, padding=(0, 2))
+    time_table.add_column("Case", style="yellow")
+    time_table.add_column("Time", style="bold")
+    time_table.add_row("Best Case", seconds_to_readable(result['best_case_seconds']))
+    time_table.add_row("Average Case", seconds_to_readable(result['average_case_seconds']))
+    time_table.add_row("Worst Case", seconds_to_readable(result['worst_case_seconds']))
+
+    # Determine risk color
+    risk_color = "red"
+    if result['risk_level'] in ["MODERATE", "LOW", "VERY LOW"]:
+        risk_color = "green" if result['risk_level'] != "MODERATE" else "yellow"
+
+    content = Group(
+        table,
+        "\n[bold yellow]⏱️  Estimated Crack Time:[/bold yellow]",
+        time_table,
+        f"\n[bold {risk_color}]🚨 Risk Level         : {result['risk_level']}[/bold {risk_color}]",
+        f"[dim]   → {result['risk_description']}[/dim]"
     )
 
-    print("\n📊 Total Search Space : " + format_large_number(result["search_space"]))
-
-    print("\n⏱️  Estimated Crack Time:")
-    print(f"   Best Case     : {seconds_to_readable(result['best_case_seconds'])}")
-    print(f"   Average Case  : {seconds_to_readable(result['average_case_seconds'])}")
-    print(f"   Worst Case    : {seconds_to_readable(result['worst_case_seconds'])}")
-
-    print(f"\n🚨 Risk Level         : {result['risk_level']}")
-    print(f"   → {result['risk_description']}")
-    print("=" * 75)
+    panel = Panel(
+        content,
+        title="[bold red]🔥 BRUTE-FORCE SIMULATION REPORT[/bold red]",
+        border_style="red",
+        expand=False
+    )
+    console.print()
+    console.print(panel)
 
 
 def save_simulation_report(
     result: Dict,
     charset_label: str,
     speed_label: str,
-    output_file="output/brute_force_report.txt",
-):
+    output_file=None,
+) -> str:
     """Save professional report to file."""
+    if output_file is None:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_file = f"output/brutecheck_report_{timestamp}.txt"
+        
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
     with open(output_file, "w", encoding="utf-8") as f:
@@ -174,63 +204,49 @@ def save_simulation_report(
 
         f.write(f"Risk Level            : {result['risk_level']}\n")
         f.write(f"Explanation           : {result['risk_description']}\n")
+        
+    return output_file
 
 
-def run_brute_force_simulator():
+from rich.prompt import Prompt, IntPrompt
+
+def run_brutecheck():
     """User-friendly CLI entry point."""
-    print("\n🔥 Auth Lens - Brute Force Simulator")
-    print("=" * 60)
+    from rich.panel import Panel
+    console.print()
+    console.print(Panel("[bold red]🔥 BruteCheck - Brute Force Simulator[/bold red]", expand=False, border_style="red", padding=(0, 2)))
 
     # Character set selection
-    print("\nChoose character set:")
+    console.print("\n[bold cyan]Choose character set:[/bold cyan]")
     for key, (label, _) in CHARSET_OPTIONS.items():
-        print(f"  {key}. {label}")
+        console.print(f"  [yellow]{key}[/yellow]. {label}")
 
-    charset_choice = input("\nEnter choice (1-4): ").strip()
-    if charset_choice not in CHARSET_OPTIONS:
-        print("❌ Invalid choice.")
-        return
-
+    charset_choice = Prompt.ask("\nEnter choice", choices=list(CHARSET_OPTIONS.keys()), default="4")
     charset_label, charset_size = CHARSET_OPTIONS[charset_choice]
 
     # Password length
-    print("\nCommon password lengths:")
-    print("  8   10   12   16")
-    length_input = input("Enter password length (or choose from above): ").strip()
-    try:
-        length = int(length_input)
-        if length < 1:
-            raise ValueError
-    except ValueError:
-        print("❌ Invalid length.")
-        return
+    console.print("\n[bold cyan]Common password lengths:[/bold cyan] 8, 10, 12, 16")
+    length = IntPrompt.ask("Enter password length (or choose from above)")
 
     # Guesses per second
-    print("\nChoose cracking speed (realistic presets):")
+    console.print("\n[bold cyan]Choose cracking speed (realistic presets):[/bold cyan]")
     for key, (label, _) in GUESS_SPEED_PRESETS.items():
-        print(f"  {key}. {label}")
+        console.print(f"  [yellow]{key}[/yellow]. {label}")
 
-    speed_choice = input("\nEnter choice (1-4): ").strip()
+    speed_choice = Prompt.ask("\nEnter choice", choices=list(GUESS_SPEED_PRESETS.keys()), default="3")
 
     if speed_choice == "4":  # Custom
-        try:
-            guesses_per_second = int(input("Enter custom guesses per second: ").strip())
-        except ValueError:
-            print("❌ Invalid input.")
-            return
+        guesses_per_second = IntPrompt.ask("Enter custom guesses per second")
         speed_label = "Custom Speed"
     else:
-        if speed_choice not in GUESS_SPEED_PRESETS:
-            print("❌ Invalid choice.")
-            return
         speed_label, guesses_per_second = GUESS_SPEED_PRESETS[speed_choice]
 
     # Run simulation
-    print(f"\n🔄 Simulating brute-force attack on {length}-character password...")
+    console.print(f"\n[bold green]🔄 Simulating brute-force attack on {length}-character password...[/bold green]")
     result = analyze_brute_force(length, charset_size, guesses_per_second)
 
     # Display and save
     print_simulation_report(result, charset_label, speed_label)
-    save_simulation_report(result, charset_label, speed_label)
+    saved_file = save_simulation_report(result, charset_label, speed_label)
 
-    print(f"\n✅ Report saved to: output/brute_force_report.txt")
+    console.print(f"\n[bold green]✅ Report saved to: [/bold green]{saved_file}\n")

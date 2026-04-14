@@ -171,26 +171,44 @@ def parse_ntlm_line(line: str) -> Optional[Dict[str, Any]]:
     }
 
 
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+from rich.prompt import Prompt
+
+console = Console()
+
 def print_hash_result(result: Dict[str, Any]):
-    """Beautiful CLI output for a single hash."""
+    """Beautiful CLI output for a single hash using rich."""
     info = result["hash_info"]
-    print("\n" + "=" * 75)
-    print("🔍 HASH ANALYSIS RESULT")
-    print("=" * 75)
-    print(f"Entry Type     : {result['entry_type']}")
-    print(f"Username       : {result['username']}")
-    print(f"Hash           : {result['hash']}")
-    print(f"Detected Type  : {info['type']}")
-    print(f"Platform       : {info['platform']}")
-    print(f"Confidence     : {info['confidence']}")
-    print(f"Description    : {info['description']}")
-    print("=" * 75)
+    confidence_color = "green" if info["confidence"] == "High" else "yellow" if info["confidence"] == "Medium" else "red"
+    
+    table = Table(show_header=False, box=None, padding=(0, 2))
+    table.add_column("Property", style="bold cyan")
+    table.add_column("Value", style="none")
+    
+    table.add_row("Entry Type", result['entry_type'])
+    table.add_row("Username", result['username'])
+    table.add_row("Hash", result['hash'])
+    table.add_row("Detected Type", f"[bold white]{info['type']}[/bold white]")
+    table.add_row("Platform", info['platform'])
+    table.add_row("Confidence", f"[bold {confidence_color}]{info['confidence']}[/bold {confidence_color}]")
+    table.add_row("Description", f"[dim]{info['description']}[/dim]")
+
+    panel = Panel(
+        table,
+        title="[bold blue]🔍 HASH ANALYSIS RESULT[/bold blue]",
+        border_style="blue",
+        expand=False
+    )
+    console.print()
+    console.print(panel)
 
 
 def analyze_hash_file(filepath: str, parser_type: str) -> List[Dict[str, Any]]:
     """Analyze hashes from a file."""
     if not os.path.exists(filepath):
-        print(f"❌ File not found: {filepath}")
+        console.print(f"[bold red]❌ File not found:[/bold red] {filepath}")
         return []
 
     results = []
@@ -212,13 +230,17 @@ def analyze_hash_file(filepath: str, parser_type: str) -> List[Dict[str, Any]]:
 
 
 def save_hash_report(
-    results: List[Dict], output_file="output/hash_analysis_report.txt"
-):
+    results: List[Dict], output_file=None
+) -> str:
     """Save professional hash analysis report."""
+    if output_file is None:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_file = f"output/hashscan_report_{timestamp}.txt"
+        
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
     with open(output_file, "w", encoding="utf-8") as f:
-        f.write("HASH ANALYSIS REPORT - Auth Lens\n")
+        f.write("HASH ANALYSIS REPORT - HashScan\n")
         f.write(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write("=" * 80 + "\n\n")
         f.write(f"Total Hashes Analyzed : {len(results)}\n\n")
@@ -234,26 +256,29 @@ def save_hash_report(
             f.write(f"Description    : {info['description']}\n")
             f.write("-" * 80 + "\n\n")
 
+    return output_file
 
-def run_hash_parser():
+
+def run_hashscan():
     """Modern and user-friendly CLI entry point."""
-    print("\n🔍 Auth Lens - Hash Parser & Identifier")
-    print("=" * 65)
-    print("Choose analysis mode:")
-    print("1. Analyze Linux shadow file (sample or custom)")
-    print("2. Analyze NTLM / Windows hash file (sample or custom)")
-    print("3. Analyze a single hash manually")
-    print("4. Back to main menu")
+    console.print()
+    console.print(Panel("[bold magenta]🔍 HashScan - Hash Analyzer[/bold magenta]", border_style="magenta", expand=False, padding=(0, 2)))
+    
+    console.print("\n[bold cyan]Choose analysis mode:[/bold cyan]")
+    console.print("  [cyan]1.[/cyan] Analyze Linux shadow file (sample or custom)")
+    console.print("  [cyan]2.[/cyan] Analyze NTLM / Windows hash file (sample or custom)")
+    console.print("  [cyan]3.[/cyan] Analyze a single hash manually")
+    console.print("  [cyan]4.[/cyan] Back to main menu")
 
-    choice = input("\nEnter your choice (1-4): ").strip()
+    choice = Prompt.ask("\nEnter your choice", choices=["1", "2", "3", "4"], default="4")
 
     if choice == "4":
         return
 
     elif choice == "3":  # Single hash
-        hash_value = input("\nPaste the hash value here: ").strip()
+        hash_value = Prompt.ask("\n[yellow]Paste the hash value here[/yellow]")
         if not hash_value:
-            print("No hash entered.")
+            console.print("[red]No hash entered.[/red]")
             return
 
         result = {
@@ -267,36 +292,33 @@ def run_hash_parser():
     elif choice in ["1", "2"]:
         parser_type = "shadow" if choice == "1" else "ntlm"
         default_file = (
-            "sample_data/sample_linux_shadow.txt"
+            "sample_data/target_shadow.txt"
             if choice == "1"
-            else "sample_data/sample_ntlm_hashes.txt"
+            else "sample_data/target_ntlm.txt"
         )
 
-        print(f"\nDefault file: {default_file}")
-        use_default = input("Use default file? (y/n): ").strip().lower() == "y"
+        console.print(f"\n[dim]Default file: {default_file}[/dim]")
+        use_default = Prompt.ask("Use default file?", choices=["y", "n"], default="y") == "y"
 
         if use_default:
             filepath = default_file
         else:
-            filepath = input("Enter full path to your hash file: ").strip()
+            filepath = Prompt.ask("Enter full path to your hash file")
             if not filepath:
-                print("No file path provided.")
+                console.print("[red]No file path provided.[/red]")
                 return
 
-        print(f"\n📄 Analyzing file: {filepath}")
+        console.print(f"\n📄 [bold cyan]Analyzing file:[/bold cyan] {filepath}")
         results = analyze_hash_file(filepath, parser_type)
 
         if not results:
-            print("No valid hash entries found in the file.")
+            console.print("[bold yellow]No valid hash entries found in the file.[/bold yellow]")
             return
 
-        print(f"✅ Found {len(results)} hash entries.\n")
+        console.print(f"[bold green]✅ Found {len(results)} hash entries.[/bold green]\n")
 
         for result in results:
             print_hash_result(result)
 
-        save_hash_report(results)
-        print(f"\n📄 Full report saved to: output/hash_analysis_report.txt")
-
-    else:
-        print("❌ Invalid choice.")
+        saved_file = save_hash_report(results)
+        console.print(f"\n[bold green]📄 Full report saved to:[/bold green] {saved_file}")

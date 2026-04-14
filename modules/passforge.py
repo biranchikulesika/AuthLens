@@ -190,44 +190,57 @@ def generate_passwords_from_tokens(
 
 
 def save_dictionary(
-    passwords: List[str], output_file: str = "output/generated_dictionary.txt"
-) -> None:
+    passwords: List[str], output_file: str = None
+) -> str:
+    if output_file is None:
+        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_file = f"output/passforge_dict_{timestamp}.txt"
+        
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, "w", encoding="utf-8") as f:
         for pw in passwords:
             f.write(pw + "\n")
+            
+    return output_file
 
 
-def run_dictionary_generator() -> None:
+from rich.console import Console
+from rich.prompt import Prompt
+from rich.panel import Panel
+
+console = Console()
+
+def run_passforge() -> None:
     """
     CLI entry point
     """
-    print("\n=== Auth Lens - Dictionary Generator ===")
-    print("Enter keywords separated by commas.")
-    print("Supported formats:")
-    print("  • Full names with spaces → Rahul Sharma")
-    print("  • Phone numbers        → 9876543210")
-    print("  • Dates                → 15-08-2002")
-    print(
-        "\nExample: Rahul Sharma, Priya Singh, 9876543210, 15-08-2002, admin, secure\n"
+    console.print()
+    console.print(Panel("[bold green]📖 PassForge - Dictionary Generator[/bold green]", border_style="green", expand=False, padding=(0, 2)))
+    console.print("Enter keywords separated by commas.")
+    console.print("[cyan]Supported formats:[/cyan]")
+    console.print("  • Full names with spaces → Rahul Sharma")
+    console.print("  • Phone numbers        → 9876543210")
+    console.print("  • Dates                → 15-08-2002")
+    console.print(
+        "\n[dim]Example: Rahul Sharma, Priya Singh, 9876543210, 15-08-2002, admin, secure[/dim]\n"
     )
 
-    user_input = input("Enter keywords: ").strip()
+    user_input = Prompt.ask("[bold yellow]Enter keywords[/bold yellow]")
 
     if not user_input:
-        print("No input provided.")
+        console.print("[red]No input provided.[/red]")
         return
 
     names, phones, dobs, keywords = normalize_input(user_input)
 
-    print(
-        f"\nDetected → Names: {len(names)} | Phones: {len(phones)} | DOBs: {len(dobs)} | Keywords: {len(keywords)}"
+    console.print(
+        f"\n[bold blue]Detected[/bold blue] → Names: {len(names)} | Phones: {len(phones)} | DOBs: {len(dobs)} | Keywords: {len(keywords)}"
     )
 
-    passwords = generate_passwords_from_tokens(names, phones, dobs, keywords)
+    with console.status("[bold green]Generating passwords...[/bold green]", spinner="dots"):
+        passwords = generate_passwords_from_tokens(names, phones, dobs, keywords)
+        saved_file = save_dictionary(passwords)
 
-    save_dictionary(passwords)
-
-    print(f"\n✅ Dictionary generated successfully!")
-    print(f"Total unique passwords: {len(passwords)}")
-    print(f"File saved: output/generated_dictionary.txt")
+    console.print(f"\n[bold green]✅ Dictionary generated successfully![/bold green]")
+    console.print(f"Total unique passwords: [bold white]{len(passwords)}[/bold white]")
+    console.print(f"File saved: [dim]{saved_file}[/dim]")
