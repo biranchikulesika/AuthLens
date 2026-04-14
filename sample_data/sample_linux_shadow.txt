@@ -1,0 +1,4 @@
+alice:$6$rounds=656000$saltstring$abcdefghijklmnopqrstuvxyz1234567890abcdefghijklmnopqrstuvxyz1234567890:19800:0:99999:7:::
+bob:$5$salt123$abcdefghijklmnopqrstuvxyz1234567890abcdefghijklmnopqrstuvxyz:19800:0:99999:7:::
+charlie:$1$salt123$abcdefghijklmno:19800:0:99999:7:::
+david:$2b$12$abcdefghijklmnopqrstuuO0M5h3xJ8K9LmN0PqR7sTuVwXyZaBcDeF:19800:0:99999:7:::
