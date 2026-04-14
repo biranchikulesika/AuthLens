@@ -1,119 +1,93 @@
-# Password Audit Suite
+# 🔐 AuthLens
 
-## Overview
+**AuthLens** is a modern, modular, and professional security audit suite designed to analyze, test, and educate on authentication vulnerabilities. AuthLens brings a cohesive, fully-featured toolkit directly to your terminal, complete with non-blocking instant navigation, rich color-coding, and comprehensive reporting.
 
-Password Audit Suite is a Python-based cybersecurity project designed to analyze password security in a controlled and ethical environment. The project demonstrates how weak password patterns can be identified, how password strength can be evaluated, how brute-force difficulty can be estimated, and how credential hash formats can be classified.
-
-This project is intended for educational use, security awareness, defensive auditing, and internship demonstration purposes.
+Whether you're compiling custom wordlists, identifying unknown hashes, assessing password entropy, or generating final high-level executive security audits—AuthLens has you covered.
 
 ---
 
-## Features
+## 🚀 Features
 
-### 1. Dictionary Generator
-Generates password candidates using:
-- user-provided seed words
-- capitalization variations
-- leetspeak substitutions
-- common suffixes
-- token combinations
+AuthLens features an elegant, zero-friction Terminal Interface powered by [`rich`](https://github.com/Textualize/rich). It includes instantaneous keystroke-based navigation (`b` to go back, `q`/`ESC` to quit) so you never get slowed down.
 
-Output file:
-- `output/generated_dictionary.txt`
+1. **📖 PassForge (Dictionary Generator)**
+   * Generate extensive, highly targeted wordlists and passwords instantly.
+   * Input names, phone numbers, birthdates, and custom keywords to automatically produce human-predictable combinations, suffix expansions, and gamer/slang variants.
 
----
+2. **🔐 StrengthMeter (Password Analyzer)**
+   * Not just a basic score script! StrengthMeter checks for keyboard walks (e.g., `qwerty`), repetition (`aaa`), sequential patterns, and known dictionary words.
+   * Calculates real entropy and provides actionable, prioritized recommendations.
+   * Can evaluate massive dumps of passwords and bulk-export results.
 
-### 2. Password Strength Analyzer
-Evaluates passwords based on:
-- length
-- lowercase usage
-- uppercase usage
-- digit usage
-- symbol usage
-- entropy estimation
-- dictionary-word detection
-- keyboard patterns
-- repeated characters
-- sequential patterns
+3. **🔥 BruteCheck (Brute Force Simulator)**
+   * Demonstrates the real-world search space for a given password length and character pool.
+   * Compares estimated crack times across realistic cracking rigs (from a basic CPU to a 10 billion guesses/sec Cloud GPU Cluster).
 
-Output file:
-- `output/password_analysis_report.txt`
+4. **🔍 HashScan (Hash Parser / Analyzer)**
+   * Analyzes complex authentication hashes without cracking them.
+   * Automatically identifies hash architectures such as Linux Shadow formats (`$6$` SHA-512, `$y$` yescrypt), modern web applications (Argon2, PBKDF2), and legacy Windows systems (NTLM/LM pairs).
 
----
+5. **📋 Auditor (Security Audit Report)**
+   * Combines input from simulated target populations (password and hash lists).
+   * Automatically generates a beautiful, executive-ready security audit report highlighting systemic weaknesses and key security recommendations.
 
-### 3. Brute-Force Simulator
-Estimates the difficulty of brute-forcing passwords based on:
-- password length
-- character set size
-- attacker guesses per second
+## 🛠️ Installation
 
-It provides:
-- total search space
-- best-case crack time
-- average-case crack time
-- worst-case crack time
-- practical risk level
+Requires **Python 3.8+**. 
 
-Output file:
-- `output/brute_force_report.txt`
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/biranchikulesika/AuthLens.git
+   cd AuthLens
+   ```
 
----
+2. **Install the dependencies:**
+   AuthLens strictly utilizes the standard library and `rich` for its beautiful interface.
+   ```bash
+   pip install rich
+   ```
 
-### 4. Hash Parser
-Classifies sample hash entries based on structure and known format patterns.
+## 🎮 Usage
 
-Supported identification types include:
-- MD5-Crypt
-- SHA-256-Crypt
-- SHA-512-Crypt
-- bcrypt
-- yescrypt
-- possible NTLM / MD5
-- possible SHA-1
-- possible SHA-256
-- possible SHA-512
+Launch the primary interactive menu:
 
-Output file:
-- `output/hash_analysis_report.txt`
+```bash
+python3 main.py
+```
+
+### Navigation Keys
+- **1, 2, 3, 4, 5**: Select modules / choices immediately.
+- **b**: Instantly go back to the previous menu.
+- **q** or **ESC**: Quit the application from anywhere.
+
+### Output Files
+When reports or wordlists are generated, AuthLens automatically formats and saves them gracefully to the `output/` directory with clean, short timestamp tags (e.g., `audit_tue_151027.txt` and `hash_tue_151027.txt`) for simple reference and retrieval.
 
 ---
 
-### 5. Final Report Generator
-Combines password analysis and hash analysis into one final audit report.
-
-Output file:
-- `output/final_audit_report.txt`
-
----
-
-## Project Structure
+## 📁 Project Structure
 
 ```text
-password_audit_suite/
-│
-├── main.py
-├── README.md
-├── requirements.txt
-│
-├── modules/
-│   ├── __init__.py
-│   ├── dictionary_generator.py
-│   ├── strength_analyzer.py
-│   ├── brute_force_simulator.py
-│   ├── hash_parser.py
-│   └── report_generator.py
-│
-├── sample_data/
-│   ├── common_words.txt
-│   ├── sample_passwords.txt
-│   ├── sample_linux_shadow.txt
-│   └── sample_ntlm_hashes.txt
-│
-├── output/
-│   ├── generated_dictionary.txt
-│   ├── password_analysis_report.txt
-│   ├── brute_force_report.txt
-│   ├── hash_analysis_report.txt
-│   └── final_audit_report.txt
-│
-└── report/
+AuthLens/
+│── main.py                 # Core application entry point
+│── README.md               # Documentation
+│── modules/                # Application modules
+│   ├── auditor.py          # Report Aggregator
+│   ├── brutecheck.py       # Simulation Tool 
+│   ├── hashscan.py         # Hash Identifier
+│   ├── nav.py              # Instant Non-Blocking Keyboard UI Routing
+│   ├── passforge.py        # Custom Wordlist Generator
+│   └── strengthmeter.py    # Entropy & Strength Evaluation
+│── sample_data/            # Sample test sets for auditing
+│   ├── target_ntlm.txt     # Windows Sample Hashes
+│   ├── target_passwords.txt# User Paswords
+│   ├── target_shadow.txt   # Linux Sample Hashes
+│   └── wordlist_common.txt # Default known-weak word dictionary
+└── output/                 # Automatically generated logs & reports
+```
+
+## 🤝 Contributing
+Contributions are well appreciated! If you have a suggestion that would make this better, please fork the repo and create a pull request or open an issue.
+
+## 📜 License
+Distributed under the MIT License. See `LICENSE` for more information.
