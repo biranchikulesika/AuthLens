@@ -109,8 +109,8 @@ def build_final_report(password_results, hash_results):
 
 def save_final_report(report_text: str, output_file=None) -> str:
     if output_file is None:
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        output_file = f"output/authlens_audit_{timestamp}.txt"
+        timestamp = datetime.now().strftime('%a_%H%M%S').lower()
+        output_file = f"output/audit_{timestamp}.txt"
         
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, "w", encoding="utf-8") as f:

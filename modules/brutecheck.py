@@ -173,8 +173,8 @@ def save_simulation_report(
 ) -> str:
     """Save professional report to file."""
     if output_file is None:
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        output_file = f"output/brutecheck_report_{timestamp}.txt"
+        timestamp = datetime.now().strftime('%a_%H%M%S').lower()
+        output_file = f"output/brute_{timestamp}.txt"
         
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 

@@ -333,8 +333,8 @@ def save_dictionary(
     passwords: List[str], output_file: str = None
 ) -> str:
     if output_file is None:
-        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-        output_file = f"output/passforge_dict_{timestamp}.txt"
+        timestamp = datetime.datetime.now().strftime('%a_%H%M%S').lower()
+        output_file = f"output/dict_{timestamp}.txt"
         
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, "w", encoding="utf-8") as f:
