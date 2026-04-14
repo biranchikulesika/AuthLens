@@ -184,7 +184,7 @@ def print_hash_result(result: Dict[str, Any]):
     confidence_color = "green" if info["confidence"] == "High" else "yellow" if info["confidence"] == "Medium" else "red"
     
     table = Table(show_header=False, box=None, padding=(0, 2))
-    table.add_column("Property", style="bold cyan")
+    table.add_column("Property", style="bold magenta")
     table.add_column("Value", style="none")
     
     table.add_row("Entry Type", result['entry_type'])
@@ -264,19 +264,20 @@ def run_hashscan():
     console.print()
     console.print(Panel("[bold magenta]🔍 HashScan - Hash Analyzer[/bold magenta]", border_style="magenta", expand=False, padding=(0, 2)))
     
-    console.print("\n[bold cyan]Choose analysis mode:[/bold cyan]")
-    console.print("  [cyan]1.[/cyan] Analyze Linux shadow file (sample or custom)")
-    console.print("  [cyan]2.[/cyan] Analyze NTLM / Windows hash file (sample or custom)")
-    console.print("  [cyan]3.[/cyan] Analyze a single hash manually")
-    console.print("  [cyan]4.[/cyan] Back to main menu")
+    console.print("\n[bold magenta]Choose analysis mode:[/bold magenta]")
+    console.print("  [magenta]1.[/magenta] Analyze Linux shadow file (sample or custom)")
+    console.print("  [magenta]2.[/magenta] Analyze NTLM / Windows hash file (sample or custom)")
+    console.print("  [magenta]3.[/magenta] Analyze a single hash manually")
 
-    choice = Prompt.ask("\nEnter your choice", choices=["1", "2", "3", "4"], default="4")
+    from modules.nav import ask_choice, ask_string
+    choice = ask_choice("\nEnter your choice", choices=["1", "2", "3"])
 
-    if choice == "4":
+    if choice in ["b", "q"]:
         return
 
     elif choice == "3":  # Single hash
-        hash_value = Prompt.ask("\n[yellow]Paste the hash value here[/yellow]")
+        hash_value = ask_string("\n[yellow]Paste the hash value here[/yellow]")
+        if hash_value == "__BACK__": return
         if not hash_value:
             console.print("[red]No hash entered.[/red]")
             return
@@ -297,18 +298,10 @@ def run_hashscan():
             else "sample_data/target_ntlm.txt"
         )
 
-        console.print(f"\n[dim]Default file: {default_file}[/dim]")
-        use_default = Prompt.ask("Use default file?", choices=["y", "n"], default="y") == "y"
+        filepath = ask_string("Enter full path to your hash file", default=default_file)
+        if filepath == "__BACK__": return
 
-        if use_default:
-            filepath = default_file
-        else:
-            filepath = Prompt.ask("Enter full path to your hash file")
-            if not filepath:
-                console.print("[red]No file path provided.[/red]")
-                return
-
-        console.print(f"\n📄 [bold cyan]Analyzing file:[/bold cyan] {filepath}")
+        console.print(f"\n📄 [bold magenta]Analyzing file:[/bold magenta] {filepath}")
         results = analyze_hash_file(filepath, parser_type)
 
         if not results:

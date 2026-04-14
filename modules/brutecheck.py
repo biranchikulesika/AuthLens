@@ -15,7 +15,6 @@ GUESS_SPEED_PRESETS = {
     "1": ("Basic CPU", 1_000_000),  # 1 million
     "2": ("High-end GPU", 500_000_000),  # 500 million
     "3": ("GPU Cluster / Cloud Rig", 10_000_000_000),  # 10 billion
-    "4": ("Custom (advanced user)", None),
 }
 
 
@@ -63,7 +62,11 @@ def calculate_search_space(length: int, charset_size: int) -> int:
 def estimate_crack_time(search_space: int, guesses_per_second: int) -> Dict[str, float]:
     """Estimate best, average, and worst-case crack time."""
     if guesses_per_second <= 0:
-        return {"best": 0, "average": 0, "worst": 0}
+        return {
+            "best_case_seconds": 0.0,
+            "average_case_seconds": 0.0,
+            "worst_case_seconds": 0.0,
+        }
 
     best_case = 1 / guesses_per_second
     average_case = search_space / (2 * guesses_per_second)
@@ -122,7 +125,7 @@ console = Console()
 def print_simulation_report(result: Dict, charset_label: str, speed_label: str):
     """Clean and beautiful CLI report using rich."""
     table = Table(show_header=False, box=None, padding=(0, 2))
-    table.add_column("Property", style="bold cyan")
+    table.add_column("Property", style="bold red")
     table.add_column("Value", style="none")
     
     table.add_row("Password Length", f"{result['length']} characters")
@@ -209,6 +212,7 @@ def save_simulation_report(
 
 
 from rich.prompt import Prompt, IntPrompt
+from modules.nav import ask_choice, ask_string
 
 def run_brutecheck():
     """User-friendly CLI entry point."""
@@ -217,29 +221,34 @@ def run_brutecheck():
     console.print(Panel("[bold red]🔥 BruteCheck - Brute Force Simulator[/bold red]", expand=False, border_style="red", padding=(0, 2)))
 
     # Character set selection
-    console.print("\n[bold cyan]Choose character set:[/bold cyan]")
+    console.print("\n[bold red]Choose character set:[/bold red]")
     for key, (label, _) in CHARSET_OPTIONS.items():
         console.print(f"  [yellow]{key}[/yellow]. {label}")
 
-    charset_choice = Prompt.ask("\nEnter choice", choices=list(CHARSET_OPTIONS.keys()), default="4")
+    charset_choice = ask_choice("\nEnter choice", choices=list(CHARSET_OPTIONS.keys()))
+    if charset_choice in ['b', 'q']:
+        return
     charset_label, charset_size = CHARSET_OPTIONS[charset_choice]
 
     # Password length
-    console.print("\n[bold cyan]Common password lengths:[/bold cyan] 8, 10, 12, 16")
-    length = IntPrompt.ask("Enter password length (or choose from above)")
+    console.print("\n[bold red]Common password lengths:[/bold red] 8, 10, 12, 16")
+    length_str = ask_string("Enter password length (or choose from above)")
+    if length_str == "__BACK__": return
+    try:
+        length = int(length_str)
+    except ValueError:
+        console.print("[yellow]Invalid length, defaulting to 12.[/yellow]")
+        length = 12
 
     # Guesses per second
-    console.print("\n[bold cyan]Choose cracking speed (realistic presets):[/bold cyan]")
+    console.print("\n[bold red]Choose cracking speed (realistic presets):[/bold red]")
     for key, (label, _) in GUESS_SPEED_PRESETS.items():
         console.print(f"  [yellow]{key}[/yellow]. {label}")
 
-    speed_choice = Prompt.ask("\nEnter choice", choices=list(GUESS_SPEED_PRESETS.keys()), default="3")
+    speed_choice = ask_choice("\nEnter choice", choices=list(GUESS_SPEED_PRESETS.keys()))
+    if speed_choice in ['b', 'q']: return
 
-    if speed_choice == "4":  # Custom
-        guesses_per_second = IntPrompt.ask("Enter custom guesses per second")
-        speed_label = "Custom Speed"
-    else:
-        speed_label, guesses_per_second = GUESS_SPEED_PRESETS[speed_choice]
+    speed_label, guesses_per_second = GUESS_SPEED_PRESETS[speed_choice]
 
     # Run simulation
     console.print(f"\n[bold green]🔄 Simulating brute-force attack on {length}-character password...[/bold green]")

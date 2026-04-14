@@ -327,10 +327,10 @@ console = Console()
 def print_analysis(result: Dict[str, Any]):
     """Beautiful CLI output using rich."""
     table = Table(show_header=False, box=None, padding=(0, 2))
-    table.add_column("Property", style="bold cyan")
+    table.add_column("Property", style="bold blue")
     table.add_column("Value", style="none")
     
-    table.add_row("Password", result['masked_password'])
+    table.add_row("Password", result['password'])
     table.add_row("Length", f"{result['length']} characters")
     table.add_row("Entropy", f"{result['entropy']} bits")
     table.add_row("Est. Crack Time", result['estimated_crack_time'])
@@ -398,8 +398,19 @@ def save_analysis_report(
         f.write(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write("=" * 80 + "\n\n")
 
+        weak = sum(1 for r in results if r["score"] <= 5)
+        strong = sum(1 for r in results if r["score"] >= 8)
+        moderate = len(results) - weak - strong
+        f.write("SUMMARY\n")
+        f.write("-" * 80 + "\n")
+        f.write(f"Total Passwords    : {len(results)}\n")
+        f.write(f"Weak/Very Weak     : {weak}\n")
+        f.write(f"Moderate           : {moderate}\n")
+        f.write(f"Strong/Very Strong : {strong}\n")
+        f.write("=" * 80 + "\n\n")
+
         for result in results:
-            f.write(f"Password           : {result['masked_password']}\n")
+            f.write(f"Password           : {result['password']}\n")
             f.write(f"Length             : {result['length']}\n")
             f.write(f"Entropy            : {result['entropy']} bits\n")
             f.write(f"Est. Crack Time    : {result['estimated_crack_time']}\n")
@@ -448,16 +459,20 @@ def run_strengthmeter():
     dictionary_words = load_dictionary_words()
 
     console.print()
-    console.print(Panel("[bold cyan]🔐 StrengthMeter - Password Analyzer[/bold cyan]", border_style="cyan", expand=False, padding=(0, 2)))
+    console.print(Panel("[bold blue]🔐 StrengthMeter - Password Analyzer[/bold blue]", border_style="blue", expand=False, padding=(0, 2)))
     
-    console.print("  [cyan]1.[/cyan] Analyze a single password")
-    console.print("  [cyan]2.[/cyan] Analyze passwords from file (sample_data/target_passwords.txt)")
-    console.print("  [cyan]3.[/cyan] Back to main menu")
+    console.print("  [blue]1.[/blue] Analyze a single password")
+    console.print("  [blue]2.[/blue] Analyze passwords from file (sample or custom)")
 
-    choice = Prompt.ask("\nEnter your choice", choices=["1", "2", "3"], default="3")
+    from modules.nav import ask_choice, ask_string
+    choice = ask_choice("\nEnter your choice", choices=["1", "2"])
+
+    if choice in ["b", "q"]:
+        return
 
     if choice == "1":
-        password = Prompt.ask("\n[bold yellow]Enter password to analyze[/bold yellow]")
+        password = ask_string("\n[bold yellow]Enter password to analyze[/bold yellow]")
+        if password == "__BACK__": return
         if not password:
             console.print("[red]No password entered.[/red]")
             return
@@ -466,13 +481,16 @@ def run_strengthmeter():
         print_analysis(result)
 
     elif choice == "2":
-        filepath = "sample_data/target_passwords.txt"
+        default_file = "sample_data/target_passwords.txt"
+        filepath = ask_string("Enter full path to your password file", default=default_file)
+        if filepath == "__BACK__": return
+
         if not os.path.exists(filepath):
             console.print(f"[red]❌ File not found:[/red] {filepath}")
             console.print("Please create the file with one password per line.")
             return
 
-        console.print(f"\n[cyan]Analyzing passwords from {filepath}...[/cyan]")
+        console.print(f"\n[blue]Analyzing passwords from {filepath}...[/blue]")
         results = []
 
         with open(filepath, "r", encoding="utf-8") as f:
@@ -484,8 +502,13 @@ def run_strengthmeter():
 
         console.print(f"\n[bold green]✅ Analyzed {len(results)} passwords successfully![/bold green]")
 
-        for result in results:
-            print_analysis(result)
+        weak = sum(1 for r in results if r["score"] <= 5)
+        strong = sum(1 for r in results if r["score"] >= 8)
+        moderate = len(results) - weak - strong
+        
+        console.print(f"  • [red]Weak / Very Weak:[/red]   {weak}")
+        console.print(f"  • [yellow]Moderate:[/yellow]           {moderate}")
+        console.print(f"  • [green]Strong / Very Strong:[/green] {strong}")
 
         saved_file = save_analysis_report(results)
         console.print(f"\n[bold green]📄 Full report saved to:[/bold green] {saved_file}")

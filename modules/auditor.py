@@ -124,17 +124,29 @@ from rich.panel import Panel
 
 console = Console()
 
+from rich.prompt import Prompt
+
 def run_auditor():
     """User-friendly final report generation using rich."""
     console.print()
     console.print(Panel("[bold cyan]📋 Auditor - Security Audit Report[/bold cyan]", border_style="cyan", expand=False, padding=(0, 2)))
     
+    console.print("\n[bold cyan]Select files for audit:[/bold cyan]")
+    
+    from modules.nav import ask_string
+    pw_file = ask_string("Enter path for passwords file", default="sample_data/target_passwords.txt")
+    if pw_file == "__BACK__": return
+    shadow_file = ask_string("Enter path for Linux shadow file", default="sample_data/target_shadow.txt")
+    if shadow_file == "__BACK__": return
+    ntlm_file = ask_string("Enter path for NTLM hash file", default="sample_data/target_ntlm.txt")
+    if ntlm_file == "__BACK__": return
+
     with console.status("[bold green]Generating final security audit report...[/bold green]", spinner="dots"):
         dictionary_words = load_dictionary_words()
 
-        password_results = analyze_password_file("sample_data/target_passwords.txt", dictionary_words)
-        linux_hashes = analyze_hash_file("sample_data/target_shadow.txt", "shadow")
-        ntlm_hashes = analyze_hash_file("sample_data/target_ntlm.txt", "ntlm")
+        password_results = analyze_password_file(pw_file, dictionary_words)
+        linux_hashes = analyze_hash_file(shadow_file, "shadow")
+        ntlm_hashes = analyze_hash_file(ntlm_file, "ntlm")
         hash_results = linux_hashes + ntlm_hashes
 
         report_text = build_final_report(password_results, hash_results)
@@ -143,6 +155,5 @@ def run_auditor():
     console.print("\n[bold green]✅ Final audit report generated successfully![/bold green]")
     console.print(f"📄 [dim]Saved to : {saved_file}[/dim]\n")
 
-    # Show short preview
-    preview_text = "\n".join(report_text.splitlines()[:20])
-    console.print(Panel(f"[italic]{preview_text}[/italic]...\n\n[bold italic](View full report in output directory)[/bold italic]", title="[bold yellow]Report Preview[/bold yellow]", border_style="yellow", expand=False))
+    # Show full report
+    console.print(Panel(report_text, title="[bold yellow]Final Audit Report[/bold yellow]", border_style="yellow", expand=False))

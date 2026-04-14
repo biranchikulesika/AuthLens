@@ -2,6 +2,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
 
+from modules.nav import ask_choice
+
 from modules.passforge import run_passforge
 from modules.strengthmeter import run_strengthmeter
 from modules.brutecheck import run_brutecheck
@@ -16,8 +18,7 @@ def print_menu():
         "[cyan]2.[/cyan] Analyze Password Strength\n"
         "[cyan]3.[/cyan] Simulate Brute Force\n"
         "[cyan]4.[/cyan] Parse Sample Hashes\n"
-        "[cyan]5.[/cyan] Generate Audit Report\n"
-        "[cyan]6.[/cyan] Exit"
+        "[cyan]5.[/cyan] Generate Audit Report"
     )
     panel = Panel(
         menu_text,
@@ -27,28 +28,39 @@ def print_menu():
         expand=False,
     )
     console.print()
-    console.print(panel, justify="center")
+    console.print(panel)
 
 
 def main():
-    while True:
-        print_menu()
-        console.print()
-        choice = Prompt.ask("[bold yellow]Enter your choice[/bold yellow]", choices=["1", "2", "3", "4", "5", "6"], default="6")
+    import sys
+    try:
+        while True:
+            print_menu()
+            console.print()
+            choice = ask_choice("Enter your choice", choices=["1", "2", "3", "4", "5"])
 
-        if choice == "1":
-            run_passforge()
-        elif choice == "2":
-            run_strengthmeter()
-        elif choice == "3":
-            run_brutecheck()
-        elif choice == "4":
-            run_hashscan()
-        elif choice == "5":
-            run_auditor()
-        elif choice == "6":
-            console.print("\n[bold green]Exiting Auth Lens. Goodbye![/bold green]\n", justify="center")
-            break
+            if choice == "q":
+                console.print("\n[bold green]Exiting Auth Lens. Goodbye![/bold green]\n")
+                break
+                
+            if choice == "b":
+                # At main menu, back acts as quit
+                console.print("\n[bold green]Exiting Auth Lens. Goodbye![/bold green]\n")
+                break
+
+            if choice == "1":
+                run_passforge()
+            elif choice == "2":
+                run_strengthmeter()
+            elif choice == "3":
+                run_brutecheck()
+            elif choice == "4":
+                run_hashscan()
+            elif choice == "5":
+                run_auditor()
+    except KeyboardInterrupt:
+        console.print("\n\n[bold green]Exiting Auth Lens. Goodbye![/bold green]\n")
+        sys.exit(0)
 
 if __name__ == "__main__":
     main()
