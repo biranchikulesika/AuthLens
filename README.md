@@ -8,7 +8,7 @@ Whether you're compiling custom wordlists, identifying unknown hashes, assessing
 
 ## 🚀 Features
 
-AuthLens features an elegant, zero-friction Terminal Interface powered by [`rich`](https://github.com/Textualize/rich). It includes instantaneous keystroke-based navigation (`b` to go back, `q`/`ESC` to quit) so you never get slowed down.
+AuthLens features an elegant, zero-friction Terminal Interface powered by [`rich`](https://github.com/Textualize/rich). It includes a professional startup banner, intelligent configuration loading (`config.json`), built-in documentation via About/Help screens, and instantaneous keystroke-based navigation (`b` to go back, `q`/`ESC` to quit) so you never get slowed down.
 
 1. **📖 PassForge (Dictionary Generator)**
    * Generate extensive, highly targeted wordlists and passwords instantly.
@@ -56,7 +56,7 @@ python3 main.py
 ```
 
 ### Navigation Keys
-- **1, 2, 3, 4, 5**: Select modules / choices immediately.
+- **1-7**: Select modules / choices (including About and Help screens) immediately.
 - **b**: Instantly go back to the previous menu.
 - **q** or **ESC**: Quit the application from anywhere.
 
@@ -72,8 +72,10 @@ AuthLens/
 │── main.py                 # Core application entry point
 │── README.md               # Documentation
 │── modules/                # Application modules
+│   ├── about.py            # Professional UI Headers & Help Screens
 │   ├── auditor.py          # Report Aggregator
 │   ├── brutecheck.py       # Simulation Tool 
+│   ├── config.py           # Configuration Management & Versioning
 │   ├── hashscan.py         # Hash Identifier
 │   ├── nav.py              # Instant Non-Blocking Keyboard UI Routing
 │   ├── passforge.py        # Custom Wordlist Generator
