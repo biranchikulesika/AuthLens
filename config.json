@@ -1,0 +1,34 @@
+{
+  "project": {
+    "name": "AuthLens",
+    "version": "1.0.0"
+  },
+
+  "output": {
+    "directory": "output",
+    "timestamped_files": true
+  },
+
+  "passforge": {
+    "max_words": 50000,
+    "enable_leetspeak": true,
+    "enable_combinations": true
+  },
+
+  "strengthmeter": {
+    "min_strong_length": 12,
+    "entropy_threshold": 60
+  },
+
+  "brutecheck": {
+    "default_speed": "fast",
+    "fast_speed": 1000000000,
+    "medium_speed": 100000000,
+    "slow_speed": 1000000
+  },
+
+  "ui": {
+    "show_banner": true,
+    "use_colors": true
+  }
+}

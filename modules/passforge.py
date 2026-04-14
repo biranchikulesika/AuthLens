@@ -4,6 +4,12 @@ from itertools import product
 import datetime
 from typing import List, Tuple
 
+from modules.config import CONFIG
+from rich.console import Console
+from rich.panel import Panel
+
+console = Console()
+
 
 def normalize_input(
     user_input: str,
@@ -68,7 +74,7 @@ def generate_passwords_from_tokens(
             passwords.append(p)
 
     current_year = str(datetime.date.today().year)
-    
+
     identity_words = [
         "king", "queen", "boss", "legend", "official", "real", "cool",
         "rockstar", "gamer", "dev", "coder", "hacker", "warrior", "alpha",
@@ -92,21 +98,20 @@ def generate_passwords_from_tokens(
             dd, mm, yyyy = dob.split("-")
             yy_str = yyyy[-2:]
             dob_variants = [
-                dd + mm + yyyy,  # DDMMYYYY
-                dd + mm + yy_str,  # DDMMYY
-                mm + dd + yyyy,  # MMDDYYYY
-                yyyy + mm + dd,  # YYYYMMDD
-                yy_str + mm + dd,  # YYMMDD
-                dd + mm,  # DDMM
-                mm + dd,  # MMDD
-                yyyy + dd + mm,  # YYYYDDMM
-                yy_str + dd + mm,  # YYDDMM
-                yyyy,  # YYYY
-                yy_str,  # YY
+                dd + mm + yyyy,   # DDMMYYYY
+                dd + mm + yy_str, # DDMMYY
+                mm + dd + yyyy,   # MMDDYYYY
+                yyyy + mm + dd,   # YYYYMMDD
+                yy_str + mm + dd, # YYMMDD
+                dd + mm,          # DDMM
+                mm + dd,          # MMDD
+                yyyy + dd + mm,   # YYYYDDMM
+                yy_str + dd + mm, # YYDDMM
+                yyyy,             # YYYY
+                yy_str,           # YY
             ]
             all_dob_variants.extend(dob_variants)
 
-            # Add year variants from dob
             year_int = int(yyyy)
             offsets = [-3, -2, -1, 0, 1, 2, 3]
             for offset in offsets:
@@ -131,7 +136,7 @@ def generate_passwords_from_tokens(
         first_cap = first_lower.capitalize()
 
         surname_cap = ""
-        last_initial = "" 
+        last_initial = ""
         if len(parts) > 1:
             surname = parts[-1]
             surname_cap = surname.lower().capitalize()
@@ -147,16 +152,17 @@ def generate_passwords_from_tokens(
                 ]
             )
 
-        name_objects.append({
-            "first_raw": first_raw,
-            "first_lower": first_lower,
-            "first_cap": first_cap,
-            "surname_cap": surname_cap,
-            "last_initial": last_initial,
-            "double_name_patterns": double_name_patterns
-        })
+        name_objects.append(
+            {
+                "first_raw": first_raw,
+                "first_lower": first_lower,
+                "first_cap": first_cap,
+                "surname_cap": surname_cap,
+                "last_initial": last_initial,
+                "double_name_patterns": double_name_patterns,
+            }
+        )
 
-        # Name + Year combinations
         for y in all_year_variants:
             add(f"{first_cap}{y}")
             add(f"{first_cap}@{y}")
@@ -165,7 +171,7 @@ def generate_passwords_from_tokens(
             add(f"{first_cap}!{y}")
             add(f"{first_cap}_{y}")
             add(f"{first_cap}.{y}")
-            
+
             if surname_cap:
                 add(f"{surname_cap}{y}")
                 add(f"{surname_cap}@{y}")
@@ -182,29 +188,29 @@ def generate_passwords_from_tokens(
             if last_initial:
                 add(f"{first_cap}{last_initial}{y2}")
 
-        common_numbers = ["123", "1234", "12345", "786", "999", "000", current_year, f"@{current_year}", f"{current_year}!"]
+        common_numbers = [
+            "123", "1234", "12345", "786", "999", "000",
+            current_year, f"@{current_year}", f"{current_year}!"
+        ]
         for num in common_numbers:
             add(f"{first_cap}{num}")
             if num not in [f"@{current_year}", f"{current_year}!"]:
                 add(f"{first_cap}@{num}")
 
-        # Human Identity
         for word in identity_words:
             add(f"{first_cap}{word}")
             for y2 in yy_list:
                 add(f"{first_cap}{word}{y2}")
             add(f"{first_cap}{word}123")
             add(f"{first_cap}@{word}")
-            
-        # Gamer Style
+
         for g in gamer_patterns:
             add(f"{first_cap}{g}")
             for y2 in yy_list:
                 add(f"{first_cap}{g}{y2}")
             add(f"{first_cap}{g}!")
             add(f"{first_cap}{g}@")
-            
-        # Prefix Variants
+
         min_prefix_len = 4
         first_len = len(first_lower)
         if first_len >= min_prefix_len:
@@ -228,7 +234,6 @@ def generate_passwords_from_tokens(
                 add(f"{prefix_cap}@{current_year}")
                 add(f"{prefix_cap}{current_year}!")
 
-        # Repeated Digits
         for rd in repeated_digits:
             add(first_cap + rd)
             add(first_lower + rd)
@@ -247,30 +252,31 @@ def generate_passwords_from_tokens(
                 first_raw + phone,
             ]
             all_phone_variants.extend(phone_variants)
-            
-            # also basic additions
+
             first_cap = obj["first_cap"]
             phone3 = phone[-3:]
             phone4 = phone[-4:]
             add(f"{first_cap}{phone4}")
             add(f"{first_cap}{phone3}")
             add(f"{first_cap}@{phone4}")
-            # The prefix ones for phone
+
             if len(first_raw) >= 4:
-                prefix_cap = first_raw[:max(4, min(8, len(first_raw)))].capitalize()
+                prefix_cap = first_raw[: max(4, min(8, len(first_raw)))].capitalize()
                 add(f"{prefix_cap}{phone4}")
                 add(f"{prefix_cap}{phone3}")
 
     if not name_objects:
         for phone in phones:
-            all_phone_variants.extend([
-                phone[-3:],
-                phone[-4:],
-                phone[-5:],
-                phone[:4],
-                phone,
-            ])
-            
+            all_phone_variants.extend(
+                [
+                    phone[-3:],
+                    phone[-4:],
+                    phone[-5:],
+                    phone[:4],
+                    phone,
+                ]
+            )
+
     all_phone_variants = list(dict.fromkeys(all_phone_variants))
 
     # ====================== Combinations ======================
@@ -285,7 +291,7 @@ def generate_passwords_from_tokens(
                 add(first_cap + dob_v + suf)
                 add(first_lower + dob_v + suf)
                 add(first_raw.capitalize() + dob_v + suf)
-                
+
             for dn in double_name_patterns:
                 add(dn + dob_v)
                 add(dn + "@" + dob_v)
@@ -294,10 +300,10 @@ def generate_passwords_from_tokens(
             for suf in suffixes:
                 add(first_cap + ph + suf)
                 add(first_lower + ph + suf)
-                
+
             for dn in double_name_patterns:
                 add(dn + ph)
-                
+
         for dob_v, ph in product(all_dob_variants, all_phone_variants):
             add(first_cap + dob_v + ph)
             add(first_cap + ph + dob_v)
@@ -329,33 +335,34 @@ def generate_passwords_from_tokens(
     return sorted(final_passwords)
 
 
-def save_dictionary(
-    passwords: List[str], output_file: str = None
-) -> str:
+def save_dictionary(passwords: List[str], output_file: str = None) -> str:
+    """Save generated dictionary using configured output directory."""
+    output_dir = CONFIG["output_directory"]
+
     if output_file is None:
-        timestamp = datetime.datetime.now().strftime('%a_%H%M%S').lower()
-        output_file = f"output/dict_{timestamp}.txt"
-        
+        timestamp = datetime.datetime.now().strftime("%a_%H%M%S").lower()
+        output_file = os.path.join(output_dir, f"dict_{timestamp}.txt")
+
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
     with open(output_file, "w", encoding="utf-8") as f:
         for pw in passwords:
             f.write(pw + "\n")
-            
+
     return output_file
 
 
-from rich.console import Console
-from rich.prompt import Prompt
-from rich.panel import Panel
-
-console = Console()
-
 def run_passforge() -> None:
-    """
-    CLI entry point
-    """
+    """CLI entry point."""
     console.print()
-    console.print(Panel("[bold green]📖 PassForge - Dictionary Generator[/bold green]", border_style="green", expand=False, padding=(0, 2)))
+    console.print(
+        Panel(
+            "[bold green]📖 PassForge - Dictionary Generator[/bold green]",
+            border_style="green",
+            expand=False,
+            padding=(0, 2),
+        )
+    )
     console.print("Enter keywords separated by commas.")
     console.print("[cyan]Supported formats:[/cyan]")
     console.print("  • Full names with spaces → Rahul Sharma")
@@ -366,9 +373,11 @@ def run_passforge() -> None:
     )
 
     from modules.nav import ask_string
+
     user_input = ask_string("Enter keywords")
 
-    if user_input == "__BACK__": return
+    if user_input == "__BACK__":
+        return
 
     if not user_input:
         console.print("[red]No input provided.[/red]")
@@ -384,6 +393,6 @@ def run_passforge() -> None:
         passwords = generate_passwords_from_tokens(names, phones, dobs, keywords)
         saved_file = save_dictionary(passwords)
 
-    console.print(f"\n[bold green]✅ Dictionary generated successfully![/bold green]")
+    console.print("\n[bold green]✅ Dictionary generated successfully![/bold green]")
     console.print(f"Total unique passwords: [bold white]{len(passwords)}[/bold white]")
     console.print(f"File saved: [dim]{saved_file}[/dim]")

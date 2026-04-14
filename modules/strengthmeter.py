@@ -4,6 +4,8 @@ import re
 from datetime import datetime
 from typing import Dict, List, Any
 
+from modules.config import CONFIG
+
 # Common weak passwords
 COMMON_PASSWORDS = {
     "password",
@@ -382,14 +384,15 @@ def print_analysis(result: Dict[str, Any]):
     console.print()
     console.print(panel)
 
-
 def save_analysis_report(
     results: List[Dict], output_file=None
 ) -> str:
     """Save detailed report."""
+    output_dir = CONFIG["output_directory"]
+
     if output_file is None:
         timestamp = datetime.now().strftime('%a_%H%M%S').lower()
-        output_file = f"output/strength_{timestamp}.txt"
+        output_file = os.path.join(output_dir, f"strength_{timestamp}.txt")
         
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
@@ -435,7 +438,6 @@ def save_analysis_report(
             f.write("\n" + "-" * 80 + "\n\n")
 
     return output_file
-
 
 def analyze_password_file(filepath: str, dictionary_words: set) -> list:
     """
